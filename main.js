@@ -13,14 +13,14 @@
     const scanInputSelector = '#sellInput';
     const discountInputSelector = 'input[name="transactionDiscountPercent"]';
 
-    /** Map barcodes to handler functions */
+/** Map barcodes to handler functions */
     const barcodeActions = {
         'DISCOUNT20': () => applyDiscount(20),
         'CHECKOUTCC': checkoutWithCreditCard,
         // Add more barcodes here as needed
     };
 
-    /** Utility: safely click a button */
+/** Utility: safely click a button */
     function safeClick(selector, delay = 0) {
         const button = document.querySelector(selector);
         if (button) {
@@ -30,7 +30,7 @@
         }
     }
 
-    /** Action: apply a percent discount */
+/** Action: apply a percent discount */
     function applyDiscount(percent) {
         const discountInput = document.querySelector(discountInputSelector);
         if (discountInput) {
@@ -41,23 +41,35 @@
         }
     }
 
-    /** Action: click Complete Transaction and select Credit Card */
+/** Action: complete checkout and send to EMV device */
     function checkoutWithCreditCard() {
         // Step 1: Click "Complete Transaction"
         safeClick('#checkout_complete_transaction_button');
-
-        // Step 2: Wait for dialog and click "Add Credit Card"
+    
+        // Step 2: Wait for "Add Credit Card" button in dialog
         const tryClickAddCard = () => {
             const addCardBtn = document.querySelector('button.gwt-Button-Icon-Credit-Card');
             if (addCardBtn) {
                 addCardBtn.click();
+    
+                // Step 3: After clicking "Add Credit Card", wait for "Send to EMV Device"
+                setTimeout(() => {
+                    const tryClickSendToEMV = () => {
+                        const sendBtn = document.querySelector('button.gwt-Button-Icon-Cloud-Upload');
+                        if (sendBtn) {
+                            sendBtn.click();
+                        } else {
+                            setTimeout(tryClickSendToEMV, 300);
+                        }
+                    };
+                    tryClickSendToEMV();
+                }, 800); // Slight delay to allow EMV dialog to appear
             } else {
-                // Retry after a short delay if not ready yet
                 setTimeout(tryClickAddCard, 300);
             }
         };
-
-        // Start checking for the credit card button shortly after clicking Complete
+    
+        // Start checking for Add Credit Card shortly after pressing "Complete Transaction"
         setTimeout(tryClickAddCard, 800);
     }
 
